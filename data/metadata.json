@@ -1,0 +1,47 @@
+{
+  "description": "Atlantic Ocean Argo daily and monthly statistics by geographic grid and depth",
+  "temporal_resolution": "daily (with monthly aggregation in the browser)",
+  "grid_size_degrees": 5,
+  "depth_ranges": [
+    {
+      "min": 0,
+      "max": 200,
+      "label": "0–200 m"
+    },
+    {
+      "min": 200,
+      "max": 500,
+      "label": "200–500 m"
+    },
+    {
+      "min": 500,
+      "max": 1000,
+      "label": "500–1000 m"
+    },
+    {
+      "min": 1000,
+      "max": 1500,
+      "label": "1000–1500 m"
+    },
+    {
+      "min": 1500,
+      "max": 2000,
+      "label": "1500–2000 m"
+    }
+  ],
+  "period": {
+    "start": "2017-01-01",
+    "end": "2026-11-06"
+  },
+  "temperature": {
+    "min": -1.661,
+    "max": 30.913
+  },
+  "salinity": {
+    "min": 30.187,
+    "max": 37.594
+  },
+  "observations": 1156790,
+  "records_visualization": 6080,
+  "parquets_processed": 135
+}

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlantic Ocean Data Explorer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="light-theme">
+<div id="app">
+  <header class="header">
+    <div class="brand">
+      <div class="eyebrow">ARGO · ATLÁNTICO · 2017–2026</div>
+      <div class="brand-content">
+        <div class="title-block">
+          <h1>ATLANTIC OCEAN<br>CALENDAR</h1>
+        </div>
+        <div class="intro-block">
+          <p class="question">¿Cómo varía el Atlántico día a día según la región y<br>la profundidad entre 2017 y 2026?</p>
+          <p class="author">Autora: Aitana Tomás San Martín</p>
+        </div>
+      </div>
+    </div>
+    <div class="top-controls">
+      <div class="control-group variable">
+        <button class="tab active" data-variable="temperature">TEMPERATURA</button>
+        <button class="tab" data-variable="salinity">SALINIDAD</button>
+      </div>
+      <div class="control-divider"></div>
+      <div class="control-group statistic">
+        <button class="tab active" data-stat="mean">PROMEDIO</button>
+        <button class="tab" data-stat="median">MEDIANA</button>
+      </div>
+      <div class="view-switch" aria-label="Resolución temporal">
+        <button class="view-tab active" data-view="daily">DIARIA</button>
+        <button class="view-tab" data-view="monthly">MENSUAL</button>
+      </div>
+    </div>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar a tema claro" title="Cambiar tema">☀</button>
+  </header>
+
+  <main class="main">
+    <section class="map-column">
+      <div class="map-title-row">
+        <h2>SELECCIONA UNA ZONA</h2>
+        <div class="region-controls" aria-label="Región oceánica">
+          <button class="region active" data-region="all">TODO</button>
+          <button class="region" data-region="polar-n">POLAR N</button>
+          <button class="region" data-region="subpolar-n">SUBPOLAR N</button>
+          <button class="region" data-region="subtropical-n">SUBTROPICAL N</button>
+          <button class="region" data-region="tropical">TROPICAL</button>
+          <button class="region" data-region="subtropical-s">SUBTROPICAL S</button>
+          <button class="region" data-region="subpolar-s">SUBPOLAR S</button>
+          <button class="region" data-region="polar-s">POLAR S</button>
+        </div>
+      </div>
+      <div class="map-frame">
+        <div class="map-y-labels" aria-hidden="true">
+          <span>70°N</span><span>60°N</span><span>50°N</span><span>40°N</span><span>30°N</span><span>20°N</span><span>10°N</span><span>0°</span><span>10°S</span><span>20°S</span><span>30°S</span><span>40°S</span><span>50°S</span><span>60°S</span>
+        </div>
+        <div class="map-wrap">
+          <img src="assets/atlantic-real-map.png" class="map-image" alt="Mapa geográfico del Atlántico">
+          <div id="map-grid" class="map-grid" aria-label="Cuadrícula 5 por 5 grados"></div>
+        </div>
+        <div class="map-x-labels" aria-hidden="true">
+          <span>80°W</span><span>70°W</span><span>60°W</span><span>50°W</span><span>40°W</span><span>30°W</span><span>20°W</span><span>10°W</span><span>0°</span><span>10°E</span><span>20°E</span>
+        </div>
+        <button id="clear-selection" class="clear-btn" aria-label="Limpiar selección" title="Limpiar selección">↻</button>
+      </div>
+
+      <div class="info-nav">
+        <button class="info-btn active" data-info="visual">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="M7 24V17M13 24V12M19 24V8M25 24V5"/><path d="M6 25.5h21"/></svg>
+          </span><span class="info-label" aria-hidden="true">VISUALIZACIÓN</span>
+        </button>
+        <button class="info-btn" data-info="limits">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="M16 6 27 26H5Z"/><path d="M16 12v7M16 22v1"/></svg>
+          </span><span class="info-label" aria-hidden="true">LIMITACIONES</span>
+        </button>
+        <button class="info-btn" data-info="source">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><rect x="8" y="5" width="16" height="22" rx="1"/><path d="M12 11h8M12 15h8M12 19h6"/></svg>
+          </span><span class="info-label" aria-hidden="true">FUENTE</span>
+        </button>
+        <button class="info-btn" data-info="filters">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="M7 9h18M7 16h18M7 23h18"/><circle cx="13" cy="9" r="2.5"/><circle cx="21" cy="16" r="2.5"/><circle cx="16" cy="23" r="2.5"/></svg>
+          </span><span class="info-label" aria-hidden="true">TRATAMIENTO</span>
+        </button>
+      </div>
+      <div id="info-panel" class="info-panel"></div>
+    </section>
+
+    <section class="matrix-column">
+      <div id="status-line" class="status-line">11 AÑOS · 0–200 m · TEMPERATURA · PROMEDIO</div>
+      <div class="matrix-shell">
+        <div id="month-labels" class="month-labels"></div>
+        <div id="year-labels" class="year-labels"></div>
+        <div id="matrix" class="matrix" aria-label="Matriz diaria: meses en vertical y años en horizontal"></div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-title" id="legend-title">TEMPERATURA (°C)</div>
+        <div class="legend-track-wrap">
+          <div id="legend-track" class="legend-track">
+            <div id="legend-marker" class="legend-marker" title="Arrastra para cambiar el valor central"></div>
+          </div>
+          <div id="legend-ticks" class="legend-ticks"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="depth-column">
+      <h2>PROFUNDIDAD</h2>
+      <div id="depth-slider" class="depth-slider"></div>
+    </aside>
+  </main>
+</div>
+<script src="data/data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
