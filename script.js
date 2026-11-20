@@ -1,14 +1,24 @@
 (() => {
   "use strict";
 
-  const DATA = (window.ARGO_DATA || []).filter(d => Number(d.year) !== 2016);
+  // Datos. Si existe data/manifest.json, la aplicación usa el conjunto
+  // preparado por el procesador webODV. Si no existe, usa data.js como
+  // respaldo para que la aplicación siga funcionando de forma local.
+  let DATA = (window.ARGO_DATA || []).filter(d => Number(d.year) !== 2016);
+  let ACTIVE_DATA = DATA;
+  let ACTIVE_INDEX_DAY = new Map();
+  let ACTIVE_INDEX_MONTH = new Map();
+  let MAP_COUNTS = new Map();
+  let DATA_MANIFEST = null;
+  let DATA_MODE = "legacy";
+
   const DEPTHS = ["0–200 m","200–500 m","500–1000 m","1000–1500 m","1500–2000 m"];
   const MONTHS = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-  const YEARS = [...new Set(DATA.map(d => Number(d.year)))].sort((a,b)=>a-b);
-  const LON_MIN = Math.min(...DATA.map(d => Number(d.lon_center)));
-  const LON_MAX = Math.max(...DATA.map(d => Number(d.lon_center)));
-  const LAT_MIN = Math.min(...DATA.map(d => Number(d.lat_center)));
-  const LAT_MAX = Math.max(...DATA.map(d => Number(d.lat_center)));
+  let YEARS = [...new Set(DATA.map(d => Number(d.year)))].sort((a,b)=>a-b);
+  let LON_MIN = DATA.length ? Math.min(...DATA.map(d => Number(d.lon_center))) : -82.5;
+  let LON_MAX = DATA.length ? Math.max(...DATA.map(d => Number(d.lon_center))) : 17.5;
+  let LAT_MIN = DATA.length ? Math.min(...DATA.map(d => Number(d.lat_center))) : -57.5;
+  let LAT_MAX = DATA.length ? Math.max(...DATA.map(d => Number(d.lat_center))) : 67.5;
   const GLOBAL = {
     temperature: {min:-2, max:31, step:1, label:"TEMPERATURA (°C)"},
     salinity: {min:31, max:38, step:1, label:"SALINIDAD"}
@@ -28,6 +38,85 @@
   const $ = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
   const key = (lat,lon) => `${lat}|${lon}`;
+
+  function indexData(rows){
+    ACTIVE_INDEX_DAY = new Map();
+    ACTIVE_INDEX_MONTH = new Map();
+    for(const r of rows){
+      const y=Number(r.year), m=Number(r.month), d=Number(r.day), depth=r.depth_range;
+      const dk=`${y}|${m}|${d}|${depth}`;
+      const mk=`${y}|${m}|${depth}`;
+      if(!ACTIVE_INDEX_DAY.has(dk)) ACTIVE_INDEX_DAY.set(dk,[]);
+      if(!ACTIVE_INDEX_MONTH.has(mk)) ACTIVE_INDEX_MONTH.set(mk,[]);
+      ACTIVE_INDEX_DAY.get(dk).push(r);
+      ACTIVE_INDEX_MONTH.get(mk).push(r);
+    }
+  }
+
+  async function fetchJson(url){
+    const dataUrl=url.startsWith("data/")?url:`data/${url}`;
+    const res=await fetch(dataUrl,{cache:"no-store"});
+    if(!res.ok) throw new Error(`No se pudo cargar ${dataUrl} (${res.status})`);
+    return await res.json();
+  }
+
+  async function loadRegionData(region){
+    if(DATA_MODE!=="chunked") return;
+    const files=(DATA_MANIFEST.regions||{})[region];
+    if(!files) throw new Error(`No existe el archivo de la región "${region}".`);
+    const list=Array.isArray(files)?files:[files];
+    const chunks=await Promise.all(list.map(fetchJson));
+    ACTIVE_DATA=chunks.flat();
+    indexData(ACTIVE_DATA);
+  }
+
+  async function loadCustomCells(){
+    if(DATA_MODE!=="chunked"){ ACTIVE_DATA=DATA.filter(d=>state.selectedCells.has(key(Number(d.lat_center),Number(d.lon_center)))); indexData(ACTIVE_DATA); return; }
+    const cells=[...state.selectedCells];
+    if(!cells.length){ACTIVE_DATA=[];indexData(ACTIVE_DATA);return;}
+    const files=cells.flatMap(k=>{
+      const [lat,lon]=k.split("|");
+      const f=(DATA_MANIFEST.cells||{})[`${lat}|${lon}`];
+      return f ? (Array.isArray(f)?f:[f]) : [];
+    });
+    const chunks=await Promise.all(files.map(fetchJson));
+    ACTIVE_DATA=chunks.flat();
+    indexData(ACTIVE_DATA);
+  }
+
+  async function loadDataSource(){
+    try{
+      const manifest=await fetch("data/manifest.json",{cache:"no-store"});
+      if(!manifest.ok) throw new Error("manifest no disponible");
+      DATA_MANIFEST=await manifest.json();
+      DATA_MODE="chunked";
+      YEARS=(DATA_MANIFEST.years||[]).map(Number).sort((a,b)=>a-b);
+      const b=DATA_MANIFEST.bounds||{};
+      LON_MIN=Number.isFinite(Number(b.lon_min))?Number(b.lon_min):LON_MIN;
+      LON_MAX=Number.isFinite(Number(b.lon_max))?Number(b.lon_max):LON_MAX;
+      LAT_MIN=Number.isFinite(Number(b.lat_min))?Number(b.lat_min):LAT_MIN;
+      LAT_MAX=Number.isFinite(Number(b.lat_max))?Number(b.lat_max):LAT_MAX;
+      if(Array.isArray(DATA_MANIFEST.depth_ranges) && DATA_MANIFEST.depth_ranges.length){
+        DEPTHS.splice(0,DEPTHS.length,...DATA_MANIFEST.depth_ranges.map(x=>x.label||x));
+      }
+      if(DATA_MANIFEST.temperature){ GLOBAL.temperature.min=Number(DATA_MANIFEST.temperature.min); GLOBAL.temperature.max=Number(DATA_MANIFEST.temperature.max); }
+      if(DATA_MANIFEST.salinity){ GLOBAL.salinity.min=Number(DATA_MANIFEST.salinity.min); GLOBAL.salinity.max=Number(DATA_MANIFEST.salinity.max); }
+      MAP_COUNTS=new Map(Object.entries(DATA_MANIFEST.map_counts||{}).map(([k,v])=>[k,Number(v)]));
+      await loadRegionData("all");
+      document.body.classList.toggle("many-years",YEARS.length>15);
+      const periodLabel=`${YEARS[0]}–${YEARS.at(-1)}`;
+      const ey=$("#period-label"); if(ey) ey.textContent=periodLabel;
+      const q=$("#question-period"); if(q) q.textContent=periodLabel;
+      const src=$("#data-source-label"); if(src) src.textContent=DATA_MANIFEST.source_label||"webODV / Argo";
+    }catch(err){
+      DATA_MODE="legacy";
+      ACTIVE_DATA=DATA;
+      indexData(ACTIVE_DATA);
+      YEARS=[...new Set(DATA.map(d=>Number(d.year)))].sort((a,b)=>a-b);
+      document.body.classList.toggle("many-years",YEARS.length>15);
+      console.warn("Usando data.js de respaldo:",err.message);
+    }
+  }
 
   function fmt(v, digits=3) {
     if (!Number.isFinite(v)) return "—";
@@ -135,13 +224,19 @@
       const b=regionBounds(state.region);
       if(c.lat>=b.latMin && c.lat<b.latMax && c.lon>=b.lonMin && c.lon<b.lonMax) el.classList.add("region-highlight");
       if(state.selectedCells.has(k)) el.classList.add("selected");
-      const count=DATA.filter(d=>Number(d.lat_center)===c.lat && Number(d.lon_center)===c.lon).reduce((s,d)=>s+(Number(d.n_profiles)||0),0);
+      const count=DATA_MODE==="chunked"
+        ? (MAP_COUNTS.get(key(c.lat,c.lon))||0)
+        : DATA.filter(d=>Number(d.lat_center)===c.lat && Number(d.lon_center)===c.lon).reduce((s,d)=>s+(Number(d.n_profiles)||0),0);
       el.title="";
       el.addEventListener("mouseenter",e=>showCellTip(e, c, count));
       el.addEventListener("mouseleave",hideTip);
       el.addEventListener("mousemove",moveTip);
-      el.addEventListener("click",()=>{
+      el.addEventListener("click",async()=>{
+        state.region="custom";
         if(state.selectedCells.has(k)) state.selectedCells.delete(k); else state.selectedCells.add(k);
+        $$(".region").forEach(x=>x.classList.remove("active"));
+        if(DATA_MODE==="chunked") await loadCustomCells();
+        else { ACTIVE_DATA=DATA.filter(d=>state.selectedCells.has(key(Number(d.lat_center),Number(d.lon_center)))); indexData(ACTIVE_DATA); }
         renderMap(); renderMatrix(); updateStatus();
       });
       grid.appendChild(el);
@@ -164,6 +259,7 @@
   function renderMap(){buildMap();}
 
   function selectedData() {
+    if(DATA_MODE==="chunked") return ACTIVE_DATA.filter(d=>d.depth_range===state.depth);
     let cells=[...state.selectedCells].map(k=>k.split("|").map(Number));
     if(!cells.length) return [];
     const cellSet=new Set(cells.map(([lat,lon])=>key(lat,lon)));
@@ -201,11 +297,15 @@
           const days=daysInMonth(year,mi+1);
           monthCell.style.setProperty("--day-rows", Math.ceil(days/7));
 
-          const monthRows=rows.filter(d=>Number(d.year)===year && Number(d.month)===mi+1);
+          const monthRows=DATA_MODE==="chunked"
+            ? (ACTIVE_INDEX_MONTH.get(`${year}|${mi+1}|${state.depth}`)||[])
+            : rows.filter(d=>Number(d.year)===year && Number(d.month)===mi+1);
           for(let day=1; day<=days; day++){
             const dayCell=document.createElement("div");
             dayCell.className="day-point-cell";
-            const dayRows=monthRows.filter(d=>Number(d.day)===day);
+            const dayRows=DATA_MODE==="chunked"
+              ? (ACTIVE_INDEX_DAY.get(`${year}|${mi+1}|${day}|${state.depth}`)||[])
+              : monthRows.filter(d=>Number(d.day)===day);
             const agg=aggregate(dayRows);
             const point=document.createElement("div");
             point.className="day-point";
@@ -296,7 +396,8 @@
   function hidePointTip(){if(pt)pt.classList.remove("show");}
 
   function updateStatus(){
-    $("#status-line").textContent=`${YEARS.length} AÑOS · ${state.depth} · ${state.variable==="temperature"?"TEMPERATURA":"SALINIDAD"} · ${state.stat==="mean"?"PROMEDIO":"MEDIANA"} · ${state.viewMode==="daily"?"DIARIA":"MENSUAL"}`;
+    const sel=state.region==="custom"?"SELECCIÓN MANUAL":state.region.toUpperCase();
+    $("#status-line").textContent=`${YEARS.length} AÑOS · ${sel} · ${state.depth} · ${state.variable==="temperature"?"TEMPERATURA":"SALINIDAD"} · ${state.stat==="mean"?"PROMEDIO":"MEDIANA"} · ${state.viewMode==="daily"?"DIARIA":"MENSUAL"}`;
   }
 
   function renderDepth(){
@@ -389,7 +490,7 @@
     $$(".tab[data-variable]").forEach(b=>b.addEventListener("click",()=>setVariable(b.dataset.variable)));
     $$(".tab[data-stat]").forEach(b=>b.addEventListener("click",()=>setStat(b.dataset.stat)));
     $$(".view-tab").forEach(b=>b.addEventListener("click",()=>setViewMode(b.dataset.view)));
-    $$(".region").forEach(b=>b.addEventListener("click",()=>{
+    $$(".region").forEach(b=>b.addEventListener("click",async()=>{
       state.region=b.dataset.region;
       const bounds=regionBounds(state.region);
       state.selectedCells.clear();
@@ -397,6 +498,8 @@
         if(c.lat>=bounds.latMin && c.lat<bounds.latMax && c.lon>=bounds.lonMin && c.lon<bounds.lonMax) state.selectedCells.add(key(c.lat,c.lon));
       });
       $$(".region").forEach(x=>x.classList.toggle("active",x===b));
+      try{ await loadRegionData(state.region); }
+      catch(err){ console.error(err); }
       renderMap(); renderMatrix(); updateStatus();
     }));
     $("#clear-selection").addEventListener("click",()=>{state.selectedCells.clear();renderMap();renderMatrix();updateStatus();});
@@ -407,7 +510,7 @@
       if(same){$("#info-panel").classList.remove("open");return;}
       const content={
         visual:`<h3>Visualización</h3>
-          <p>Explora la variabilidad del océano Atlántico a partir de datos de perfiles Argo entre 2017 y 2026. La visualización permite seleccionar una región geográfica mediante una cuadrícula de celdas de 5° × 5°, escoger un intervalo de profundidad y consultar la temperatura o la salinidad del agua.</p>
+          <p>Explora la variabilidad del océano Atlántico a partir de datos de perfiles Argo entre todos los años disponibles en el conjunto de datos. La visualización permite seleccionar una región geográfica mediante una cuadrícula de celdas de 5° × 5°, escoger un intervalo de profundidad y consultar la temperatura o la salinidad del agua.</p>
           <p>La matriz temporal muestra los años en el eje horizontal y los meses en el eje vertical. En la vista <strong>DIARIA</strong>, cada punto representa un día del mes y permite observar la variación temporal con más detalle. En la vista <strong>MENSUAL</strong>, cada punto representa el valor agregado de un mes y año.</p>
           <p>El color de los puntos representa el valor de la variable seleccionada: temperatura o salinidad. La posición dentro de la escala de color permite comparar los valores entre las diferentes fechas y regiones. La intensidad del halo alrededor de los puntos representa la <strong>desviación estándar</strong> de las observaciones disponibles para ese periodo y celda: un halo más grande indica una dispersión más elevada de los valores.</p>
           <p>También se puede escoger entre <strong>promedio y mediana</strong> para modificar el estadístico utilizado para representar el valor central de las observaciones. La mediana permite reducir la influencia de valores extremos, mientras que el promedio representa el valor medio de las observaciones.</p>
@@ -422,12 +525,12 @@
           <p>La visualización permite identificar patrones temporales y espaciales en los datos Argo disponibles, pero no debe interpretarse como una reconstrucción continua del estado de todo el Atlántico ni como una estimación directa de la circulación oceánica.</p>`,
 
         source:`<h3>Fuente de los datos y de los contenidos</h3>
-          <p><strong>Datos oceanográficos:</strong> <a href="https://dataselection.euro-argo.eu/" target="_blank" rel="noopener">Euro-Argo Data Selection Tool</a>, herramienta web de selección de datos del programa internacional Argo. Permite seleccionar perfiles oceanográficos según el área geográfica, el periodo temporal y las variables de interés. Los datos utilizados en esta visualización provienen de una selección realizada mediante esta herramienta y descargada en formato NetCDF.</p>
-          <p><strong>Cita de los datos:</strong> Argo (2000). <em>Argo float data and metadata from Global Data Assembly Centre (Argo GDAC)</em>. SEANOE. <a href="https://doi.org/10.17882/42182" target="_blank" rel="noopener">https://doi.org/10.17882/42182</a>. Este es el conjunto de datos de referencia del programa Argo y el DOI correspondiente se puede utilizar para citar los datos Argo.</p>
-          <p><strong>Selección y descarga:</strong> la selección de los perfiles se realizó mediante el <strong>Euro-Argo Data Selection Tool</strong>. Una vez procesada la petición, los datos fueron proporcionados mediante un archivo comprimido en formato <code>.tar.gz</code> que contenía los archivos NetCDF correspondientes a la selección.</p>
-          <p><strong>Periodo y área de estudio:</strong> los datos seleccionados corresponden a perfiles Argo del Atlántico Norte utilizados en el análisis, con información de temperatura, salinidad, profundidad, latitud, longitud y fecha.</p>
-          <p><strong>Identificación de la descarga:</strong> la petición concreta generó el archivo <code>DataSelection_d90a9fb2-40d4-448d-a50e-474ce942882f.tar.gz</code>. El archivo fue proporcionado por <strong>Coriolis/Ifremer</strong> mediante un enlace temporal enviado por correo electrónico. El enlace de descarga tenía una validez de 7 días.</p>
-          <p><strong>Parámetros de selección:</strong> mediante el <strong>Euro-Argo Data Selection Tool</strong> se seleccionaron perfiles Argo del Atlántico Norte, delimitado entre <strong>0–70° N de latitud y −70–20° de longitud</strong>, con un rango de profundidad de <strong>0–2000 m</strong> y para el periodo <strong>2016–2026</strong>. Las variables seleccionadas fueron <strong>temperatura y salinidad</strong>. La descarga se realizó en formato <strong>NetCDF</strong>.</p>`,
+          <p><strong>Datos oceanográficos:</strong> <strong>webODV / Ocean Data View</strong>. El archivo utilizado para esta versión fue generado mediante webODV a partir de la colección <code>Argo_Atlantic_Profiles.odv</code> y exportado en formato NetCDF4.</p>
+          <p><strong>Identificación del archivo:</strong> <code>webodv_11-19-2026_989SFA0w840F.nc</code>. El propio NetCDF identifica el software como <strong>Web Ocean Data View 5.8.6.4</strong>, el tipo de datos como <strong>Profiles</strong> y la característica como <strong>profile</strong>.</p>
+          <p><strong>Contenido:</strong> perfiles Argo del Atlántico con posición, fecha, presión, temperatura y salinidad, además de variables de control de calidad y metadatos de plataforma.</p>
+          <p><strong>Procesamiento:</strong> para que el navegador no tenga que abrir el NetCDF original de varios gigabytes, los perfiles se procesan previamente por bloques y se agregan en una cuadrícula de <strong>5° × 5°</strong>, cinco intervalos de profundidad y resolución temporal diaria. La aplicación carga únicamente los datos agregados necesarios.</p>
+          <p><strong>Variables científicas utilizadas:</strong> <code>Pressure_adjusted_</code>, <code>Temperature_adjusted_</code> y <code>Practical_Salinity_adjusted_</code>. La profundidad se clasifica por presión en los intervalos mostrados por la aplicación.</p>
+          <p><strong>Importante:</strong> los puntos representan estadísticas de los perfiles disponibles para cada combinación de fecha, celda geográfica y profundidad. No representan una observación continua del océano ni una medición exactamente en el centro de cada celda.</p>`,
 
         filters:`<h3>Archivo original y tratamiento de los datos</h3>
           <p><strong>Archivo original:</strong> los archivos NetCDF descargados mediante el Euro-Argo Data Selection Tool constituyen los datos de origen de la visualización. Estos archivos contienen los perfiles oceanográficos Argo con información sobre la posición, la fecha, la profundidad, la temperatura y la salinidad.</p>
@@ -457,15 +560,19 @@
     marker.addEventListener("dblclick",()=>{state.center=.5;updateLegend();renderMatrix();});
   }
 
-  allMapCells().forEach(c=>state.selectedCells.add(key(c.lat,c.lon)));
+  async function init(){
+    await loadDataSource();
+    allMapCells().forEach(c=>state.selectedCells.add(key(c.lat,c.lon)));
+    setupControls();
+    setupTheme();
+    renderMap();
+    renderDepth();
+    updateLegend();
+    renderMatrix();
+    updateStatus();
+    setupLegendDrag();
+  }
 
-  setupControls();
-  setupTheme();
-  renderMap();
-  renderDepth();
-  updateLegend();
-  renderMatrix();
-  updateStatus();
-  setupLegendDrag();
+  init();
 })();
 

@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atlantic Ocean Data Explorer</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261121-4">
 </head>
 <body class="light-theme">
 <div id="app">
   <header class="header">
     <div class="brand">
-      <div class="eyebrow">ARGO · ATLÁNTICO · 2017–2026</div>
+      <div class="eyebrow">ARGO · ATLÁNTICO · <span id="period-label">TODOS LOS AÑOS</span></div>
       <div class="brand-content">
         <div class="title-block">
           <h1>ATLANTIC OCEAN<br>CALENDAR</h1>
         </div>
         <div class="intro-block">
-          <p class="question">¿Cómo varía el Atlántico día a día según la región y<br>la profundidad entre 2017 y 2026?</p>
+          <p class="question">¿Cómo varía el Atlántico día a día según la región y la profundidad en <span id="question-period">todos los años disponibles</span>?</p>
           <p class="author">Autora: Aitana Tomás San Martín</p>
         </div>
       </div>
@@ -94,7 +94,7 @@
     </section>
 
     <section class="matrix-column">
-      <div id="status-line" class="status-line">11 AÑOS · 0–200 m · TEMPERATURA · PROMEDIO</div>
+      <div id="status-line" class="status-line">CARGANDO DATOS · 0–200 m · TEMPERATURA · PROMEDIO</div>
       <div class="matrix-shell">
         <div id="month-labels" class="month-labels"></div>
         <div id="year-labels" class="year-labels"></div>
