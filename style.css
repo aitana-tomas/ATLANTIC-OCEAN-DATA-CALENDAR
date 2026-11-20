@@ -641,15 +641,13 @@ body.light-theme .legend-ticks span{
     color-mix(in srgb, var(--halo-color) 3%, transparent) 82%,
     transparent 100%) !important;
   opacity:1 !important;
-}.daily-cell .day-halo{
-  --halo:clamp(8px, var(--halo), 13px);
 }
 .daily-cell .day-point{
-  width: 5px !important;
-  height:5px !important;
+  width:4px !important;
+  height:4px !important;
 }.monthly-cell .day-halo{
-  width:clamp(40px, var(--halo), 50px) !important;
-  height:clamp(40px, var(--halo), 50px) !important;
+  width:var(--halo) !important;
+  height:var(--halo) !important;
   opacity:1 !important;
 }
 .monthly-cell .monthly-point{
@@ -905,9 +903,7 @@ body.dark-theme .info-nav .info-btn.active .icon{
 body.many-years .year-labels span{font-size:9px;letter-spacing:0}
 body.many-years .day-point{width:4px;height:4px}
 body.many-years .day-point.no-data{width:2px;height:2px}
-body.many-years .day-halo{--halo:7px !important}
 body.many-years .monthly-point{width:6px;height:6px}
-body.many-years .monthly-cell .day-halo{width:32px !important;height:32px !important}
 
 @media (min-width:1101px){
   #app{
@@ -1096,16 +1092,80 @@ body.many-years .monthly-cell .day-halo{width:32px !important;height:32px !impor
     flex:0 0 4.5px;
   }
 
-  body.many-years .day-halo{
-    --halo:8px !important;
-  }
-
   body.many-years .monthly-point{
     width:7px;
     height:7px;
     flex:0 0 7px;
   }
 }
+
+.legend-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:4px 10px;
+  margin-bottom:3px;
+}
+
+.legend-heading .legend-title{
+  margin:0;
+}
+
+.dispersion-key{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  color:#53606b;
+  font-size:10px;
+  font-weight:600;
+  line-height:1;
+  white-space:nowrap;
+}
+
+.dispersion-key-sample{
+  position:relative;
+  display:inline-block;
+  width:17px;
+  height:17px;
+  flex:none;
+  border:1px solid rgba(16,34,52,.5);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(201,0,47,.2) 0%,rgba(201,0,47,.08) 58%,transparent 100%);
+}
+
+.dispersion-key-sample::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:#102234;
+  transform:translate(-50%,-50%);
+}
+
+.daily-cell .day-point:not(.no-data){
+  width:4px !important;
+  height:4px !important;
+  flex:0 0 4px !important;
+}
+
+.daily-cell .day-halo,
+.monthly-cell .day-halo{
+  width:var(--halo) !important;
+  height:var(--halo) !important;
+  border:1px solid color-mix(in srgb,var(--halo-color) 48%,transparent) !important;
+  background:radial-gradient(circle at center,
+    color-mix(in srgb,var(--halo-color) 22%,transparent) 0%,
+    color-mix(in srgb,var(--halo-color) 10%,transparent) 58%,
+    transparent 100%) !important;
+}
+
+body:not(.light-theme) .dispersion-key{color:#c4cbd0}
+body:not(.light-theme) .dispersion-key-sample{border-color:rgba(255,255,255,.55)}
+body:not(.light-theme) .dispersion-key-sample::after{background:#ffffff}
 
 @media (min-width:1101px) and (max-height:700px){
   .map-wrap,

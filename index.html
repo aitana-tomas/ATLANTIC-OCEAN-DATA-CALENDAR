@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atlantic Ocean Data Explorer</title>
-<link rel="stylesheet" href="style.css?v=20261121-4">
+<link rel="stylesheet" href="style.css?v=20261121-5">
 </head>
 <body class="light-theme">
 <div id="app">
@@ -102,7 +102,13 @@
       </div>
 
       <div class="legend">
-        <div class="legend-title" id="legend-title">TEMPERATURA (°C)</div>
+        <div class="legend-heading">
+          <div class="legend-title" id="legend-title">TEMPERATURA (°C)</div>
+          <div class="dispersion-key" title="Un halo más amplio indica una desviación estándar mayor">
+            <span class="dispersion-key-sample" aria-hidden="true"></span>
+            <span>Halo: desviación estándar</span>
+          </div>
+        </div>
         <div class="legend-track-wrap">
           <div id="legend-track" class="legend-track">
             <div id="legend-marker" class="legend-marker" title="Arrastra para cambiar el valor central"></div>

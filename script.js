@@ -320,7 +320,7 @@
               const normalized=Math.min(1,sd/((g.max-g.min)*.12));
               const halo=document.createElement("div");
               halo.className="day-halo";
-              halo.style.setProperty("--halo",(9+normalized*6)+"px");
+              halo.style.setProperty("--halo",(7+normalized*5)+"px");
               halo.style.setProperty("--halo-color",color);
               dayCell.append(halo,point);
               dayCell.addEventListener("mouseenter",e=>showDayPointTip(e,year,mi,day,agg));
@@ -356,7 +356,7 @@
           const normalized=Math.min(1,sd/((g.max-g.min)*.12));
           const halo=document.createElement("div");
           halo.className="day-halo";
-          halo.style.setProperty("--halo",(12+normalized*7)+"px");
+          halo.style.setProperty("--halo",(30+normalized*18)+"px");
           halo.style.setProperty("--halo-color",color);
           monthCell.append(halo,point);
           monthCell.addEventListener("mouseenter",e=>showMonthPointTip(e,year,mi,agg));
