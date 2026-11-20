@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atlantic Ocean Data Explorer</title>
-<link rel="stylesheet" href="style.css?v=20261121-5">
+<link rel="stylesheet" href="style.css?v=20261121-7">
 </head>
 <body class="light-theme">
 <div id="app">
@@ -14,10 +14,10 @@
       <div class="brand-content">
         <div class="title-block">
           <h1>ATLANTIC OCEAN<br>CALENDAR</h1>
-        </div>
-        <div class="intro-block">
-          <p class="question">¿Cómo varía el Atlántico día a día según la región y la profundidad en <span id="question-period">todos los años disponibles</span>?</p>
-          <p class="author">Autora: Aitana Tomás San Martín</p>
+          <div class="intro-block">
+            <p class="question">¿Cómo varía el Atlántico día a día según la región y la profundidad en <span id="question-period">1997–2026</span>?</p>
+            <p class="author">Autora: Aitana Tomás San Martín</p>
+          </div>
         </div>
       </div>
     </div>
@@ -42,7 +42,6 @@
   <main class="main">
     <section class="map-column">
       <div class="map-title-row">
-        <h2>SELECCIONA UNA ZONA</h2>
         <div class="region-controls" aria-label="Región oceánica">
           <button class="region active" data-region="all">TODO</button>
           <button class="region" data-region="polar-n">POLAR N</button>
@@ -118,8 +117,7 @@
       </div>
     </section>
 
-    <aside class="depth-column">
-      <h2>PROFUNDIDAD</h2>
+    <aside class="depth-column" aria-label="Intervalos de profundidad">
       <div id="depth-slider" class="depth-slider"></div>
     </aside>
   </main>

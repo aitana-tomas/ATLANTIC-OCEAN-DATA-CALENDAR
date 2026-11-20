@@ -1000,56 +1000,120 @@ body.many-years .monthly-point{width:6px;height:6px}
 
 @media (min-width:1101px){
   .main{
-    grid-template-columns:24% minmax(0,1fr) 10%;
+    grid-template-columns:minmax(280px,24%) minmax(0,1fr) minmax(145px,12%);
     column-gap:clamp(12px,1.4vw,20px);
   }
 
+  .header{
+    grid-template-columns:minmax(0,1fr) minmax(480px,1fr);
+    align-items:start;
+    gap:clamp(20px,3vw,40px);
+    flex:0 0 clamp(155px,21vh,180px);
+    height:auto;
+  }
+
   .brand-content{
-    display:grid;
-    grid-template-columns:minmax(210px,max-content) minmax(0,1fr);
-    align-items:center;
-    gap:clamp(14px,1.8vw,26px);
-    max-width:min(860px,39vw);
+    display:block;
+    max-width:100%;
   }
 
   .intro-block{
-    max-width:100%;
+    max-width:560px;
     padding-top:0;
+    margin-top:12px;
   }
 
   .brand h1{
-    font-size:clamp(38px,3vw,44px);
+    font-size:clamp(42px,3.3vw,48px);
   }
 
   .eyebrow{
     font-size:10px;
     letter-spacing:3.5px;
+    margin-bottom:4px;
   }
 
   .question{
-    font-size:11px;
-    letter-spacing:1.8px;
+    font-size:13px;
+    line-height:1.35;
+    letter-spacing:.35px;
   }
 
   .author{
-    font-size:10px;
-    letter-spacing:1.8px;
-  }
-
-  h2{
-    font-size:clamp(21px,1.5vw,24px);
+    font-size:11px;
+    letter-spacing:.8px;
   }
 
   .top-controls{
-    gap:clamp(20px,2vw,30px);
+    position:static;
+    display:grid;
+    grid-template-columns:max-content 1px max-content;
+    grid-template-rows:auto auto;
+    justify-content:center;
+    align-content:start;
+    align-items:center;
+    gap:12px 18px;
+    width:100%;
+    padding:10px 44px 0 0;
+    transform:none;
+    left:auto;
+    top:auto;
   }
 
   .control-group{
-    gap:clamp(18px,1.8vw,26px);
+    display:flex;
+    align-items:center;
+    gap:2px;
+    padding:4px;
+    border:1px solid #dfe3e5;
+    border-radius:10px;
+    background:#f1f3f4;
+  }
+
+  .control-group.variable{
+    grid-column:1;
+    grid-row:1;
+  }
+
+  .control-divider{
+    display:block;
+    grid-column:2;
+    grid-row:1;
+    height:30px;
+    margin:0;
+  }
+
+  .control-group.statistic{
+    grid-column:3;
+    grid-row:1;
   }
 
   .control-group .tab{
-    font-size:15px;
+    font-size:12px;
+    letter-spacing:.35px;
+    padding:8px 10px;
+    border-radius:7px;
+  }
+
+  .control-group .tab.active{
+    color:#ffffff;
+    background:#102235;
+    box-shadow:0 1px 3px rgba(16,34,53,.2);
+  }
+
+  .control-group .tab.active:after{
+    display:none;
+  }
+
+  .view-switch{
+    position:static;
+    grid-column:1 / -1;
+    grid-row:2;
+    justify-self:center;
+    margin-top:2px;
+    transform:none;
+    left:auto;
+    top:auto;
   }
 
   .region{
@@ -1058,7 +1122,48 @@ body.many-years .monthly-point{width:6px;height:6px}
   }
 
   .map-frame{
-    margin-top:clamp(12px,2.4vh,24px) !important;
+    margin-top:0 !important;
+  }
+
+  .map-column{
+    justify-content:flex-start !important;
+    padding-top:clamp(8px,1.6vh,16px) !important;
+  }
+
+  .map-title-row{
+    min-height:0;
+    margin:0 0 clamp(10px,1.8vh,18px) !important;
+    transform:none !important;
+  }
+
+  .depth-column{
+    align-items:center;
+  }
+
+  .depth-slider{
+    width:100%;
+    height:min(60vh,480px);
+  }
+
+  .depth-track{
+    left:14px;
+    width:2px;
+  }
+
+  .depth-node{
+    height:26px;
+    gap:12px;
+  }
+
+  .depth-dot{
+    width:19px;
+    height:19px;
+    border-width:2px;
+  }
+
+  .depth-node.active .depth-dot{
+    border-width:4px;
+    box-shadow:0 0 0 2px #102638;
   }
 
   .month-labels span{
@@ -1077,13 +1182,46 @@ body.many-years .monthly-point{width:6px;height:6px}
     font-size:7px !important;
   }
 
-  .depth-column h2{
-    font-size:22px;
-    margin-bottom:18px;
+  .depth-label{
+    font-size:11px;
   }
 
-  .depth-label{
-    font-size:10px;
+  .view-switch{
+    padding:3px;
+    gap:3px;
+    border-radius:10px;
+    background:#f1f3f4;
+  }
+
+  .view-tab{
+    padding:7px 15px;
+    border-radius:7px;
+    font-size:11px;
+  }
+
+  body:not(.light-theme) .control-group,
+  body:not(.light-theme) .view-switch{
+    border-color:#3d464d;
+    background:#202326;
+  }
+
+  body:not(.light-theme) .control-group .tab,
+  body:not(.light-theme) .view-tab{
+    color:#c4cbd0;
+  }
+
+  body:not(.light-theme) .control-group .tab.active,
+  body:not(.light-theme) .view-tab.active{
+    color:#151719;
+    background:#f5f7f8;
+  }
+
+  body.light-theme .control-group .tab.active{
+    color:#ffffff !important;
+  }
+
+  body:not(.light-theme) .control-group .tab.active{
+    color:#151719 !important;
   }
 
   body.many-years .day-point{
@@ -1096,6 +1234,88 @@ body.many-years .monthly-point{width:6px;height:6px}
     width:7px;
     height:7px;
     flex:0 0 7px;
+  }
+}
+
+@media (max-width:1100px){
+  .header{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:16px;
+    height:auto;
+  }
+
+  .brand-content{
+    display:block;
+    max-width:100%;
+  }
+
+  .intro-block{
+    max-width:650px;
+    margin-top:12px;
+  }
+
+  .top-controls{
+    position:static;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-start;
+    gap:10px;
+    width:100%;
+    padding:0;
+    transform:none;
+  }
+
+  .control-group{
+    gap:2px;
+    padding:4px;
+    border:1px solid #dfe3e5;
+    border-radius:10px;
+    background:#f1f3f4;
+  }
+
+  .control-divider{
+    display:none;
+  }
+
+  .control-group .tab{
+    padding:7px 10px;
+    border-radius:7px;
+    font-size:12px;
+  }
+
+  .control-group .tab.active{
+    color:#ffffff;
+    background:#102235;
+  }
+
+  .control-group .tab.active:after{
+    display:none;
+  }
+
+  .view-switch{
+    position:static;
+    transform:none;
+    margin:0;
+  }
+
+  body:not(.light-theme) .control-group,
+  body:not(.light-theme) .view-switch{
+    border-color:#3d464d;
+    background:#202326;
+  }
+
+  body:not(.light-theme) .control-group .tab,
+  body:not(.light-theme) .view-tab{
+    color:#c4cbd0;
+  }
+
+  body:not(.light-theme) .control-group .tab.active,
+  body:not(.light-theme) .view-tab.active{
+    color:#151719;
+    background:#f5f7f8;
   }
 }
 
