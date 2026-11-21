@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atlantic Ocean Data Explorer</title>
-<link rel="stylesheet" href="style.css?v=20261121-14">
+<link rel="stylesheet" href="style.css?v=20261121-15">
 </head>
 <body class="light-theme">
 <div id="app">
@@ -42,7 +42,7 @@
   <main class="main">
     <section class="map-column">
       <div class="map-title-row">
-        <div class="region-controls" aria-label="Región oceánica">
+        <div class="region-controls" aria-label="Regiones oceánicas y selección del mapa">
           <button class="region active" data-region="all">TODO</button>
           <button class="region" data-region="polar-n">POLAR N</button>
           <button class="region" data-region="subpolar-n">SUBPOLAR N</button>
@@ -51,6 +51,7 @@
           <button class="region" data-region="subtropical-s">SUBTROPICAL S</button>
           <button class="region" data-region="subpolar-s">SUBPOLAR S</button>
           <button class="region" data-region="polar-s">POLAR S</button>
+          <button id="clear-selection" class="clear-btn" type="button" aria-label="Deseleccionar todas las casillas del mapa" title="Deseleccionar todas las casillas del mapa">QUITAR TODAS</button>
         </div>
       </div>
       <div class="map-frame">
@@ -64,7 +65,6 @@
         <div class="map-x-labels" aria-hidden="true">
           <span>80°W</span><span>70°W</span><span>60°W</span><span>50°W</span><span>40°W</span><span>30°W</span><span>20°W</span><span>10°W</span><span>0°</span><span>10°E</span><span>20°E</span>
         </div>
-        <button id="clear-selection" class="clear-btn" aria-label="Limpiar selección" title="Limpiar selección">↻</button>
       </div>
 
       <div class="info-nav">
