@@ -22,8 +22,8 @@
   let LAT_MIN = DATA.length ? Math.min(...DATA.map(d => Number(d.lat_center))) : -57.5;
   let LAT_MAX = DATA.length ? Math.max(...DATA.map(d => Number(d.lat_center))) : 67.5;
   const GLOBAL = {
-    temperature: {min:-2, max:31, step:1, label:"TEMPERATURA (°C)"},
-    salinity: {min:31, max:38, step:1, label:"SALINIDAD"}
+    temperature: {min:-2, max:31, step:1},
+    salinity: {min:31, max:38, step:1}
   };
   const VALID_RANGES = {
     temperature: {min:-3, max:40},
@@ -465,7 +465,6 @@
 
   function updateLegend(){
     const g=GLOBAL[state.variable];
-    $("#legend-title").textContent=g.label;
     const ticks=$("#legend-ticks");
     ticks.innerHTML="";
     const step = 1;
@@ -562,11 +561,22 @@
       indexData(ACTIVE_DATA);
       renderMap(); renderMatrix(); updateStatus();
     });
+    const infoPanel=$("#info-panel");
+    $("#info-close").addEventListener("click",()=>infoPanel.close());
+    infoPanel.addEventListener("click",event=>{
+      if(event.target===infoPanel) infoPanel.close();
+    });
+    document.addEventListener("keydown",event=>{
+      if(event.key==="Escape" && infoPanel.open){
+        event.preventDefault();
+        infoPanel.close();
+      }
+    });
     $$(".info-btn").forEach(btn=>btn.addEventListener("click",()=>{
-      const same=state.info===btn.dataset.info && $("#info-panel").classList.contains("open");
+      const same=state.info===btn.dataset.info && infoPanel.open;
       $$(".info-btn").forEach(x=>x.classList.toggle("active",x===btn));
       state.info=btn.dataset.info;
-      if(same){$("#info-panel").classList.remove("open");return;}
+      if(same){infoPanel.close();return;}
       const content={
         visual:`<h3>Visualización</h3>
           <p>Explora la variabilidad del océano Atlántico a partir de datos de perfiles Argo entre todos los años disponibles en el conjunto de datos. La visualización permite seleccionar una región geográfica mediante una cuadrícula de celdas de 5° × 5°, escoger un intervalo de profundidad y consultar la temperatura o la salinidad del agua.</p>
@@ -599,8 +609,9 @@
           <p>Los valores calculados se incorporaron a un conjunto de datos derivado utilizado directamente por la aplicación web. De esta manera, el navegador no tiene que procesar los archivos NetCDF originales, sino que consulta los datos estadísticos previamente preparados para la visualización.</p>
           <p>La selección de las celdas geográficas, la profundidad, la variable y el estadístico se realiza de manera interactiva dentro de la aplicación. Los valores mostrados corresponden, por tanto, a las observaciones disponibles después de aplicar estos filtros.</p>`
       };
-      $("#info-panel").innerHTML=content[state.info];
-      $("#info-panel").classList.add("open");
+      $("#info-content").innerHTML=content[state.info];
+      if(!infoPanel.open) infoPanel.showModal();
+      infoPanel.scrollTop=0;
     }));
   }
 
