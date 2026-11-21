@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atlantic Ocean Data Explorer</title>
-<link rel="stylesheet" href="style.css?v=20261121-15">
+<link rel="stylesheet" href="style.css?v=20261121-24">
 </head>
 <body class="light-theme">
 <div id="app">
@@ -16,24 +16,8 @@
           <h1>ATLANTIC OCEAN<br>CALENDAR</h1>
           <div class="intro-block">
             <p class="question">¿Cómo varía el Atlántico día a día según<br>la región y la profundidad en <span id="question-period">1997–2026</span>?</p>
-            <p class="author">Autora: Aitana Tomás San Martín</p>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="top-controls">
-      <div class="control-group variable">
-        <button class="tab active" data-variable="temperature">TEMPERATURA</button>
-        <button class="tab" data-variable="salinity">SALINIDAD</button>
-      </div>
-      <div class="control-divider"></div>
-      <div class="control-group statistic">
-        <button class="tab active" data-stat="mean">PROMEDIO</button>
-        <button class="tab" data-stat="median">MEDIANA</button>
-      </div>
-      <div class="view-switch" aria-label="Resolución temporal">
-        <button class="view-tab active" data-view="daily">DIARIA</button>
-        <button class="view-tab" data-view="monthly">MENSUAL</button>
       </div>
     </div>
     <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar a tema claro" title="Cambiar tema">☀</button>
@@ -41,6 +25,21 @@
 
   <main class="main">
     <section class="map-column">
+      <div class="top-controls">
+        <div class="control-group variable">
+          <button class="tab active" data-variable="temperature">TEMPERATURA</button>
+          <button class="tab" data-variable="salinity">SALINIDAD</button>
+        </div>
+        <div class="control-divider"></div>
+        <div class="control-group statistic">
+          <button class="tab active" data-stat="mean">PROMEDIO</button>
+          <button class="tab" data-stat="median">MEDIANA</button>
+        </div>
+        <div class="view-switch" aria-label="Resolución temporal">
+          <button class="view-tab active" data-view="daily">DIARIA</button>
+          <button class="view-tab" data-view="monthly">MENSUAL</button>
+        </div>
+      </div>
       <div class="map-title-row">
         <div class="region-controls" aria-label="Regiones oceánicas y selección del mapa">
           <button class="region active" data-region="all">TODO</button>
@@ -121,6 +120,7 @@
       <div id="depth-slider" class="depth-slider"></div>
     </aside>
   </main>
+  <footer class="author">Autora: Aitana Tomás San Martín</footer>
 </div>
 <script src="data/data.js"></script>
 <script src="script.js?v=20261121-14"></script>
