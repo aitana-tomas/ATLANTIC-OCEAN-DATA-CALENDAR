@@ -45,6 +45,9 @@ DEPTHS = [
     (1500, 2000, "1500–2000 m"),
 ]
 
+TEMPERATURE_LIMITS = (-3.0, 40.0)
+SALINITY_LIMITS = (0.0, 45.0)
+
 REGIONS = {
     "all": None,
     "polar-n": (60, 70),
@@ -55,6 +58,17 @@ REGIONS = {
     "subpolar-s": (-45, -30),
     "polar-s": (-60, -45),
 }
+
+
+def as_float_array(values):
+    # Preserve missing-data masks before converting to ordinary floats.
+    return np.ma.asarray(values, dtype=np.float64).filled(np.nan)
+
+
+def within_limits(values, limits):
+    values = as_float_array(values)
+    valid = np.isfinite(values) & (values >= limits[0]) & (values <= limits[1])
+    return np.where(valid, values, np.nan)
 
 
 def safe_json(obj):
@@ -164,13 +178,19 @@ def make_profile_rows(temp, sal, pres, dates, lat, lon):
     rows = []
     n_profiles = len(dates)
 
-    pres = np.asarray(pres)
-    temp = np.asarray(temp)
-    sal = np.asarray(sal)
+    pres = as_float_array(pres)
+    temp = within_limits(temp, TEMPERATURE_LIMITS)
+    sal = within_limits(sal, SALINITY_LIMITS)
+    lat = as_float_array(lat)
+    lon = as_float_array(lon)
+    valid_geo = (
+        np.isfinite(lat) & (lat >= -90) & (lat <= 90) &
+        np.isfinite(lon) & (lon >= -180) & (lon <= 180)
+    )
 
     for pmin, pmax, label in DEPTHS:
         pmask = np.isfinite(pres) & (pres >= pmin) & (pres < pmax)
-        common = pmask & np.isfinite(temp) & np.isfinite(sal)
+        common = pmask & np.isfinite(temp) & np.isfinite(sal) & valid_geo[:, None]
 
         nt, tm, tmed, tsd = profile_stats(temp, common)
         ns, sm, smed, ssd = profile_stats(sal, common)
@@ -291,6 +311,16 @@ def main():
         pres_var = ds.variables["Pressure_adjusted_"]
         lat_var = ds.variables["latitude"]
         lon_var = ds.variables["longitude"]
+        all_lat = as_float_array(lat_var[:])
+        all_lon = as_float_array(lon_var[:])
+        valid_geo = (
+            np.isfinite(all_lat) & (all_lat >= -90) & (all_lat <= 90) &
+            np.isfinite(all_lon) & (all_lon >= -180) & (all_lon <= 180)
+        )
+        if not np.any(valid_geo):
+            raise SystemExit("No hay coordenadas geográficas válidas en el archivo.")
+        valid_lat = all_lat[valid_geo]
+        valid_lon = all_lon[valid_geo]
 
         global_tmin, global_tmax = np.inf, -np.inf
         global_smin, global_smax = np.inf, -np.inf
@@ -312,11 +342,11 @@ def main():
 
                 # La mayoría de colecciones ODV están ordenadas temporalmente.
                 # Si no lo están, netCDF4 admite indexado 1D igualmente.
-                lat = np.asarray(lat_var[ids], dtype=float)
-                lon = np.asarray(lon_var[ids], dtype=float)
-                pres = np.asarray(pres_var[ids], dtype=float)
-                temp = np.asarray(temp_var[ids], dtype=float)
-                sal = np.asarray(sal_var[ids], dtype=float)
+                lat = as_float_array(lat_var[ids])
+                lon = as_float_array(lon_var[ids])
+                pres = as_float_array(pres_var[ids])
+                temp = within_limits(temp_var[ids], TEMPERATURE_LIMITS)
+                sal = within_limits(sal_var[ids], SALINITY_LIMITS)
                 dates = dates_all[ids]
 
                 valid_t = temp[np.isfinite(temp)]
@@ -443,10 +473,10 @@ def main():
         "feature_type": "profile",
         "years": years,
         "bounds": {
-            "lat_min": float(np.min(lat_var[:])),
-            "lat_max": float(np.max(lat_var[:])),
-            "lon_min": float(np.min(lon_var[:])),
-            "lon_max": float(np.max(lon_var[:])),
+            "lat_min": float(np.min(valid_lat)),
+            "lat_max": float(np.max(valid_lat)),
+            "lon_min": float(np.min(valid_lon)),
+            "lon_max": float(np.max(valid_lon)),
         },
         "depth_ranges": [
             {"min": a, "max": b, "label": label} for a, b, label in DEPTHS

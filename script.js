@@ -9,6 +9,10 @@
   let ACTIVE_INDEX_DAY = new Map();
   let ACTIVE_INDEX_MONTH = new Map();
   let MAP_COUNTS = new Map();
+  let DATA_QUALITY = {
+    temperature:{mean:0,median:0,std:0},
+    salinity:{mean:0,median:0,std:0}
+  };
   let DATA_MANIFEST = null;
   let DATA_MODE = "legacy";
 
@@ -22,6 +26,10 @@
   const GLOBAL = {
     temperature: {min:-2, max:31, step:1, label:"TEMPERATURA (°C)"},
     salinity: {min:31, max:38, step:1, label:"SALINIDAD"}
+  };
+  const VALID_RANGES = {
+    temperature: {min:-3, max:40},
+    salinity: {min:0, max:45}
   };
 
   const state = {
@@ -42,6 +50,10 @@
   function indexData(rows){
     ACTIVE_INDEX_DAY = new Map();
     ACTIVE_INDEX_MONTH = new Map();
+    DATA_QUALITY = {
+      temperature:{mean:0,median:0,std:0},
+      salinity:{mean:0,median:0,std:0}
+    };
     for(const r of rows){
       const y=Number(r.year), m=Number(r.month), d=Number(r.day), depth=r.depth_range;
       const dk=`${y}|${m}|${d}|${depth}`;
@@ -50,6 +62,15 @@
       if(!ACTIVE_INDEX_MONTH.has(mk)) ACTIVE_INDEX_MONTH.set(mk,[]);
       ACTIVE_INDEX_DAY.get(dk).push(r);
       ACTIVE_INDEX_MONTH.get(mk).push(r);
+      if((Number(r.n_observations)||0)<=0) continue;
+      for(const variable of ["temperature","salinity"]){
+        const prefix=variable==="temperature"?"temperature":"salinity";
+        const range=VALID_RANGES[variable];
+        if(!isPlausible(numberOrNaN(r[`${prefix}_mean`]),variable)) DATA_QUALITY[variable].mean++;
+        if(!isPlausible(numberOrNaN(r[`${prefix}_median`]),variable)) DATA_QUALITY[variable].median++;
+        const sd=numberOrNaN(r[`${prefix}_std`]);
+        if(!Number.isFinite(sd) || sd<0 || sd>range.max-range.min) DATA_QUALITY[variable].std++;
+      }
     }
   }
 
@@ -99,8 +120,15 @@
       if(Array.isArray(DATA_MANIFEST.depth_ranges) && DATA_MANIFEST.depth_ranges.length){
         DEPTHS.splice(0,DEPTHS.length,...DATA_MANIFEST.depth_ranges.map(x=>x.label||x));
       }
-      if(DATA_MANIFEST.temperature){ GLOBAL.temperature.min=Number(DATA_MANIFEST.temperature.min); GLOBAL.temperature.max=Number(DATA_MANIFEST.temperature.max); }
-      if(DATA_MANIFEST.salinity){ GLOBAL.salinity.min=Number(DATA_MANIFEST.salinity.min); GLOBAL.salinity.max=Number(DATA_MANIFEST.salinity.max); }
+      for(const variable of ["temperature","salinity"]){
+        const range=DATA_MANIFEST[variable], limits=VALID_RANGES[variable];
+        const min=Number(range?.min), max=Number(range?.max);
+        if(range && Number.isFinite(min) && Number.isFinite(max) &&
+          min>=limits.min && max<=limits.max && min<max){
+          GLOBAL[variable].min=min;
+          GLOBAL[variable].max=max;
+        }
+      }
       MAP_COUNTS=new Map(Object.entries(DATA_MANIFEST.map_counts||{}).map(([k,v])=>[k,Number(v)]));
       await loadRegionData("all");
       document.body.classList.toggle("many-years",YEARS.length>15);
@@ -121,6 +149,15 @@
   function fmt(v, digits=3) {
     if (!Number.isFinite(v)) return "—";
     return Number(v).toFixed(digits).replace(/\.?0+$/,"");
+  }
+
+  function numberOrNaN(value) {
+    return value==null || value==="" ? NaN : Number(value);
+  }
+
+  function isPlausible(value, variable) {
+    const range=VALID_RANGES[variable];
+    return Number.isFinite(value) && value>=range.min && value<=range.max;
   }
 
   function colorAt(value) {
@@ -144,34 +181,37 @@
     return "rgb(198,0,45)";
   }
 
-  function meanWeighted(rows, field) {
+  function meanWeighted(rows, field, variable) {
     let sw=0,s=0;
     rows.forEach(r=>{
-      const n=Number(r.n_observations)||0, v=Number(r[field]);
-      if(n>0 && Number.isFinite(v)){sw+=n;s+=n*v;}
+      const n=Number(r.n_observations)||0, v=numberOrNaN(r[field]);
+      if(n>0 && isPlausible(v,variable)){sw+=n;s+=n*v;}
     });
     return sw?s/sw:NaN;
   }
 
-  function pooledStd(rows, meanField, stdField) {
-    let nTot=0, sum=0;
-    rows.forEach(r=>{
-      const n=Number(r.n_observations)||0, m=Number(r[meanField]), sd=Number(r[stdField]);
-      if(n>0 && Number.isFinite(m) && Number.isFinite(sd)){nTot+=n;sum+=n*(sd*sd + (m-0)**2);}
+  function pooledStd(rows, meanField, stdField, variable) {
+    const range=VALID_RANGES[variable];
+    const validRows=rows.filter(r=>{
+      const mean=numberOrNaN(r[meanField]), sd=numberOrNaN(r[stdField]);
+      const n=Number(r.n_observations)||0;
+      return n>0 && isPlausible(mean,variable) && Number.isFinite(sd) &&
+        sd>=0 && sd<=range.max-range.min;
     });
+    const nTot=validRows.reduce((sum,r)=>sum+(Number(r.n_observations)||0),0);
     if(!nTot)return NaN;
-    const m=meanWeighted(rows,meanField);
+    const m=meanWeighted(validRows,meanField,variable);
     let ss=0;
-    rows.forEach(r=>{
-      const n=Number(r.n_observations)||0, x=Number(r[meanField]), sd=Number(r[stdField]);
-      if(n>0 && Number.isFinite(x)&&Number.isFinite(sd)) ss += n*((sd*sd)+Math.pow(x-m,2));
+    validRows.forEach(r=>{
+      const n=Number(r.n_observations)||0, x=numberOrNaN(r[meanField]), sd=numberOrNaN(r[stdField]);
+      ss += n*((sd*sd)+Math.pow(x-m,2));
     });
     return Math.sqrt(Math.max(0,ss/nTot));
   }
 
-  function weightedMedian(rows, valueField) {
-    const vals=rows.filter(r=>Number.isFinite(Number(r[valueField])) && (Number(r.n_observations)||0)>0)
-      .map(r=>({v:Number(r[valueField]),w:Number(r.n_observations)||0})).sort((a,b)=>a.v-b.v);
+  function weightedMedian(rows, valueField, variable) {
+    const vals=rows.filter(r=>isPlausible(numberOrNaN(r[valueField]),variable) && (Number(r.n_observations)||0)>0)
+      .map(r=>({v:numberOrNaN(r[valueField]),w:Number(r.n_observations)||0})).sort((a,b)=>a.v-b.v);
     if(!vals.length)return NaN;
     const total=vals.reduce((s,x)=>s+x.w,0), half=total/2;
     let acc=0; for(const x of vals){acc+=x.w;if(acc>=half)return x.v;}
@@ -184,11 +224,15 @@
     const meanField=isTemp?"temperature_mean":"salinity_mean";
     const medianField=isTemp?"temperature_median":"salinity_median";
     const stdField=isTemp?"temperature_std":"salinity_std";
-    const value=state.stat==="mean" ? meanWeighted(rows,meanField) : weightedMedian(rows,medianField);
-    const sd=pooledStd(rows,meanField,stdField);
-    const n=rows.reduce((s,r)=>s+(Number(r.n_observations)||0),0);
-    const profiles=rows.reduce((s,r)=>s+(Number(r.n_profiles)||0),0);
-    return {value,sd,n,profiles,cells:rows.length};
+    const valueField=state.stat==="mean" ? meanField : medianField;
+    const validRows=rows.filter(r=>isPlausible(numberOrNaN(r[valueField]),state.variable) && (Number(r.n_observations)||0)>0);
+    const value=state.stat==="mean"
+      ? meanWeighted(validRows,meanField,state.variable)
+      : weightedMedian(validRows,medianField,state.variable);
+    const sd=pooledStd(rows,meanField,stdField,state.variable);
+    const n=validRows.reduce((s,r)=>s+(Number(r.n_observations)||0),0);
+    const profiles=validRows.reduce((s,r)=>s+(Number(r.n_profiles)||0),0);
+    return {value,sd,n,profiles,cells:validRows.length};
   }
 
   function regionBounds(region) {
@@ -397,7 +441,17 @@
 
   function updateStatus(){
     const sel=state.region==="custom"?"SELECCIÓN MANUAL":state.region.toUpperCase();
-    $("#status-line").textContent=`${YEARS.length} AÑOS · ${sel} · ${state.depth} · ${state.variable==="temperature"?"TEMPERATURA":"SALINIDAD"} · ${state.stat==="mean"?"PROMEDIO":"MEDIANA"} · ${state.viewMode==="daily"?"DIARIA":"MENSUAL"}`;
+    const quality=DATA_QUALITY[state.variable];
+    const invalid=quality[state.stat];
+    const statistic=state.stat==="mean"?"MEDIAS":"MEDIANAS";
+    const warnings=[];
+    if(invalid) warnings.push(`${invalid.toLocaleString("es-ES")} ${statistic} FUERA DE RANGO OMITIDAS`);
+    if(quality.std) warnings.push(`${quality.std.toLocaleString("es-ES")} DESVIACIONES NO PLAUSIBLES OMITIDAS`);
+    const warning=warnings.length?` · ${warnings.join(" · ")}`:"";
+    const line=$("#status-line");
+    line.textContent=`${YEARS.length} AÑOS · ${sel} · ${state.depth} · ${state.variable==="temperature"?"TEMPERATURA":"SALINIDAD"} · ${state.stat==="mean"?"PROMEDIO":"MEDIANA"} · ${state.viewMode==="daily"?"DIARIA":"MENSUAL"}${warning}`;
+    line.title=warnings.join(". ");
+    line.style.display=warnings.length?"block":"";
   }
 
   function renderDepth(){
