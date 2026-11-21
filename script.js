@@ -9,10 +9,6 @@
   let ACTIVE_INDEX_DAY = new Map();
   let ACTIVE_INDEX_MONTH = new Map();
   let MAP_COUNTS = new Map();
-  let DATA_QUALITY = {
-    temperature:{mean:0,median:0,std:0},
-    salinity:{mean:0,median:0,std:0}
-  };
   let DATA_MANIFEST = null;
   let DATA_MODE = "legacy";
 
@@ -50,10 +46,6 @@
   function indexData(rows){
     ACTIVE_INDEX_DAY = new Map();
     ACTIVE_INDEX_MONTH = new Map();
-    DATA_QUALITY = {
-      temperature:{mean:0,median:0,std:0},
-      salinity:{mean:0,median:0,std:0}
-    };
     for(const r of rows){
       const y=Number(r.year), m=Number(r.month), d=Number(r.day), depth=r.depth_range;
       const dk=`${y}|${m}|${d}|${depth}`;
@@ -62,15 +54,6 @@
       if(!ACTIVE_INDEX_MONTH.has(mk)) ACTIVE_INDEX_MONTH.set(mk,[]);
       ACTIVE_INDEX_DAY.get(dk).push(r);
       ACTIVE_INDEX_MONTH.get(mk).push(r);
-      if((Number(r.n_observations)||0)<=0) continue;
-      for(const variable of ["temperature","salinity"]){
-        const prefix=variable==="temperature"?"temperature":"salinity";
-        const range=VALID_RANGES[variable];
-        if(!isPlausible(numberOrNaN(r[`${prefix}_mean`]),variable)) DATA_QUALITY[variable].mean++;
-        if(!isPlausible(numberOrNaN(r[`${prefix}_median`]),variable)) DATA_QUALITY[variable].median++;
-        const sd=numberOrNaN(r[`${prefix}_std`]);
-        if(!Number.isFinite(sd) || sd<0 || sd>range.max-range.min) DATA_QUALITY[variable].std++;
-      }
     }
   }
 
@@ -440,18 +423,9 @@
   function hidePointTip(){if(pt)pt.classList.remove("show");}
 
   function updateStatus(){
-    const sel=state.region==="custom"?"SELECCIÓN MANUAL":state.region.toUpperCase();
-    const quality=DATA_QUALITY[state.variable];
-    const invalid=quality[state.stat];
-    const statistic=state.stat==="mean"?"MEDIAS":"MEDIANAS";
-    const warnings=[];
-    if(invalid) warnings.push(`${invalid.toLocaleString("es-ES")} ${statistic} FUERA DE RANGO OMITIDAS`);
-    if(quality.std) warnings.push(`${quality.std.toLocaleString("es-ES")} DESVIACIONES NO PLAUSIBLES OMITIDAS`);
-    const warning=warnings.length?` · ${warnings.join(" · ")}`:"";
     const line=$("#status-line");
-    line.textContent=`${YEARS.length} AÑOS · ${sel} · ${state.depth} · ${state.variable==="temperature"?"TEMPERATURA":"SALINIDAD"} · ${state.stat==="mean"?"PROMEDIO":"MEDIANA"} · ${state.viewMode==="daily"?"DIARIA":"MENSUAL"}${warning}`;
-    line.title=warnings.join(". ");
-    line.style.display=warnings.length?"block":"";
+    line.textContent="";
+    line.style.display="none";
   }
 
   function renderDepth(){

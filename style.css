@@ -1000,16 +1000,22 @@ body.many-years .monthly-point{width:6px;height:6px}
 
 @media (min-width:1101px){
   .main{
-    grid-template-columns:minmax(210px,15%) minmax(0,1fr) minmax(140px,8%);
-    column-gap:clamp(10px,1vw,14px);
+    grid-template-columns:minmax(210px,16%) minmax(0,1fr) minmax(116px,5.5%);
+    column-gap:clamp(8px,.8vw,11px);
   }
 
   .header{
     grid-template-columns:minmax(0,1fr) minmax(480px,1fr);
     align-items:start;
     gap:clamp(20px,3vw,40px);
-    flex:0 0 clamp(155px,21vh,180px);
+    flex:0 0 clamp(132px,18vh,148px);
     height:auto;
+  }
+
+  .status-line{
+    display:none !important;
+    height:0;
+    margin:0;
   }
 
   .brand-content{
