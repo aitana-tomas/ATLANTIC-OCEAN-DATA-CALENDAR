@@ -9,6 +9,8 @@
   let ACTIVE_INDEX_DAY = new Map();
   let ACTIVE_INDEX_MONTH = new Map();
   let MAP_COUNTS = new Map();
+  let CELL_DATA_CACHE = new Map();
+  let customLoadGeneration = 0;
   let DATA_MANIFEST = null;
   let DATA_MODE = "legacy";
 
@@ -66,6 +68,7 @@
 
   async function loadRegionData(region){
     if(DATA_MODE!=="chunked") return;
+    customLoadGeneration++;
     const files=(DATA_MANIFEST.regions||{})[region];
     if(!files) throw new Error(`No existe el archivo de la región "${region}".`);
     const list=Array.isArray(files)?files:[files];
@@ -76,15 +79,22 @@
 
   async function loadCustomCells(){
     if(DATA_MODE!=="chunked"){ ACTIVE_DATA=DATA.filter(d=>state.selectedCells.has(key(Number(d.lat_center),Number(d.lon_center)))); indexData(ACTIVE_DATA); return; }
+    const generation=++customLoadGeneration;
     const cells=[...state.selectedCells];
-    if(!cells.length){ACTIVE_DATA=[];indexData(ACTIVE_DATA);return;}
-    const files=cells.flatMap(k=>{
-      const [lat,lon]=k.split("|");
-      const f=(DATA_MANIFEST.cells||{})[`${lat}|${lon}`];
-      return f ? (Array.isArray(f)?f:[f]) : [];
-    });
-    const chunks=await Promise.all(files.map(fetchJson));
-    ACTIVE_DATA=chunks.flat();
+    ACTIVE_DATA=[];
+    indexData(ACTIVE_DATA);
+    if(!cells.length) return;
+
+    const missing=cells.filter(k=>!CELL_DATA_CACHE.has(k));
+    const loaded=await Promise.all(missing.map(async k=>{
+      const files=(DATA_MANIFEST.cells||{})[k];
+      const list=files ? (Array.isArray(files)?files:[files]) : [];
+      const chunks=await Promise.all(list.map(fetchJson));
+      return [k,chunks.flat()];
+    }));
+    loaded.forEach(([k,rows])=>CELL_DATA_CACHE.set(k,rows));
+    if(generation!==customLoadGeneration) return;
+    ACTIVE_DATA=cells.flatMap(k=>CELL_DATA_CACHE.get(k)||[]);
     indexData(ACTIVE_DATA);
   }
 
@@ -250,7 +260,10 @@
       const k=key(c.lat,c.lon);
       const b=regionBounds(state.region);
       if(c.lat>=b.latMin && c.lat<b.latMax && c.lon>=b.lonMin && c.lon<b.lonMax) el.classList.add("region-highlight");
-      if(state.selectedCells.has(k)) el.classList.add("selected");
+      const selected=state.selectedCells.has(k);
+      if(selected) el.classList.add("selected");
+      el.setAttribute("aria-label",`Celda ${c.lat-2.5} a ${c.lat+2.5} grados de latitud, ${c.lon} a ${c.lon+5} grados de longitud`);
+      el.setAttribute("aria-pressed",String(selected));
       const count=DATA_MODE==="chunked"
         ? (MAP_COUNTS.get(key(c.lat,c.lon))||0)
         : DATA.filter(d=>Number(d.lat_center)===c.lat && Number(d.lon_center)===c.lon).reduce((s,d)=>s+(Number(d.n_profiles)||0),0);
@@ -259,12 +272,22 @@
       el.addEventListener("mouseleave",hideTip);
       el.addEventListener("mousemove",moveTip);
       el.addEventListener("click",async()=>{
+        if(state.region!=="custom"){
+          state.selectedCells.clear();
+          $$("#map-grid .map-cell").forEach(cell=>{
+            cell.classList.remove("selected","region-highlight");
+            cell.setAttribute("aria-pressed","false");
+          });
+        }
         state.region="custom";
         if(state.selectedCells.has(k)) state.selectedCells.delete(k); else state.selectedCells.add(k);
+        const selected=state.selectedCells.has(k);
+        el.classList.toggle("selected",selected);
+        el.setAttribute("aria-pressed",String(selected));
         $$(".region").forEach(x=>x.classList.remove("active"));
         if(DATA_MODE==="chunked") await loadCustomCells();
         else { ACTIVE_DATA=DATA.filter(d=>state.selectedCells.has(key(Number(d.lat_center),Number(d.lon_center)))); indexData(ACTIVE_DATA); }
-        renderMap(); renderMatrix(); updateStatus();
+        renderMatrix(); updateStatus();
       });
       grid.appendChild(el);
     });
@@ -530,7 +553,15 @@
       catch(err){ console.error(err); }
       renderMap(); renderMatrix(); updateStatus();
     }));
-    $("#clear-selection").addEventListener("click",()=>{state.selectedCells.clear();renderMap();renderMatrix();updateStatus();});
+    $("#clear-selection").addEventListener("click",()=>{
+      state.selectedCells.clear();
+      state.region="custom";
+      $$(".region").forEach(x=>x.classList.remove("active"));
+      customLoadGeneration++;
+      ACTIVE_DATA=[];
+      indexData(ACTIVE_DATA);
+      renderMap(); renderMatrix(); updateStatus();
+    });
     $$(".info-btn").forEach(btn=>btn.addEventListener("click",()=>{
       const same=state.info===btn.dataset.info && $("#info-panel").classList.contains("open");
       $$(".info-btn").forEach(x=>x.classList.toggle("active",x===btn));
