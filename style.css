@@ -1045,7 +1045,7 @@ body.many-years .monthly-point{width:6px;height:6px}
   }
 
   .top-controls{
-    position:static;
+    position:absolute;
     display:grid;
     grid-template-columns:max-content 1px max-content;
     grid-template-rows:auto auto;
@@ -1053,21 +1053,21 @@ body.many-years .monthly-point{width:6px;height:6px}
     align-content:start;
     align-items:center;
     gap:12px 18px;
-    width:100%;
-    padding:10px 44px 0 0;
-    transform:none;
-    left:auto;
-    top:auto;
+    width:max-content;
+    padding:0;
+    transform:translateX(-50%);
+    left:56%;
+    top:clamp(10px,1.8vh,18px);
   }
 
   .control-group{
     display:flex;
     align-items:center;
-    gap:2px;
-    padding:4px;
-    border:1px solid #dfe3e5;
-    border-radius:10px;
-    background:#f1f3f4;
+    gap:clamp(16px,1.8vw,24px);
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
   }
 
   .control-group.variable{
@@ -1079,7 +1079,7 @@ body.many-years .monthly-point{width:6px;height:6px}
     display:block;
     grid-column:2;
     grid-row:1;
-    height:30px;
+    height:24px;
     margin:0;
   }
 
@@ -1089,20 +1089,20 @@ body.many-years .monthly-point{width:6px;height:6px}
   }
 
   .control-group .tab{
-    font-size:12px;
-    letter-spacing:.35px;
-    padding:8px 10px;
-    border-radius:7px;
+    font-size:14px;
+    letter-spacing:.5px;
+    padding:0 0 7px;
+    border-radius:0;
   }
 
   .control-group .tab.active{
-    color:#ffffff;
-    background:#102235;
-    box-shadow:0 1px 3px rgba(16,34,53,.2);
+    background:transparent;
+    box-shadow:none;
   }
 
   .control-group .tab.active:after{
-    display:none;
+    display:block;
+    height:2px;
   }
 
   .view-switch{
@@ -1126,8 +1126,8 @@ body.many-years .monthly-point{width:6px;height:6px}
   }
 
   .map-column{
-    justify-content:flex-start !important;
-    padding-top:clamp(8px,1.6vh,16px) !important;
+    justify-content:center !important;
+    padding-top:0 !important;
   }
 
   .map-title-row{
@@ -1187,22 +1187,24 @@ body.many-years .monthly-point{width:6px;height:6px}
   }
 
   .view-switch{
-    padding:3px;
-    gap:3px;
-    border-radius:10px;
-    background:#f1f3f4;
+    padding:0;
+    gap:clamp(16px,2vw,24px);
+    border:0;
+    border-radius:0;
+    background:transparent;
   }
 
   .view-tab{
-    padding:7px 15px;
-    border-radius:7px;
+    position:relative;
+    padding:0 0 6px;
+    border-radius:0;
     font-size:11px;
   }
 
   body:not(.light-theme) .control-group,
   body:not(.light-theme) .view-switch{
-    border-color:#3d464d;
-    background:#202326;
+    border-color:transparent;
+    background:transparent;
   }
 
   body:not(.light-theme) .control-group .tab,
@@ -1212,16 +1214,16 @@ body.many-years .monthly-point{width:6px;height:6px}
 
   body:not(.light-theme) .control-group .tab.active,
   body:not(.light-theme) .view-tab.active{
-    color:#151719;
-    background:#f5f7f8;
+    color:#f5f7f8;
+    background:transparent;
   }
 
   body.light-theme .control-group .tab.active{
-    color:#ffffff !important;
+    color:#102235 !important;
   }
 
   body:not(.light-theme) .control-group .tab.active{
-    color:#151719 !important;
+    color:#f5f7f8 !important;
   }
 
   body.many-years .day-point{
@@ -1269,11 +1271,11 @@ body.many-years .monthly-point{width:6px;height:6px}
   }
 
   .control-group{
-    gap:2px;
-    padding:4px;
-    border:1px solid #dfe3e5;
-    border-radius:10px;
-    background:#f1f3f4;
+    gap:clamp(12px,2vw,20px);
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
   }
 
   .control-divider{
@@ -1281,30 +1283,41 @@ body.many-years .monthly-point{width:6px;height:6px}
   }
 
   .control-group .tab{
-    padding:7px 10px;
-    border-radius:7px;
-    font-size:12px;
+    padding:0 0 6px;
+    border-radius:0;
+    font-size:13px;
   }
 
   .control-group .tab.active{
-    color:#ffffff;
-    background:#102235;
+    background:transparent;
   }
 
   .control-group .tab.active:after{
-    display:none;
+    display:block;
+    height:2px;
   }
 
   .view-switch{
     position:static;
     transform:none;
     margin:0;
+    padding:0;
+    gap:clamp(12px,2vw,20px);
+    border:0;
+    border-radius:0;
+    background:transparent;
+  }
+
+  .view-tab{
+    position:relative;
+    padding:0 0 6px;
+    border-radius:0;
   }
 
   body:not(.light-theme) .control-group,
   body:not(.light-theme) .view-switch{
-    border-color:#3d464d;
-    background:#202326;
+    border-color:transparent;
+    background:transparent;
   }
 
   body:not(.light-theme) .control-group .tab,
@@ -1314,9 +1327,49 @@ body.many-years .monthly-point{width:6px;height:6px}
 
   body:not(.light-theme) .control-group .tab.active,
   body:not(.light-theme) .view-tab.active{
-    color:#151719;
-    background:#f5f7f8;
+    color:#f5f7f8;
+    background:transparent;
   }
+}
+
+.control-group .tab.active{
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+.view-tab.active{
+  position:relative;
+  background:transparent !important;
+}
+
+.view-tab.active:after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:2px;
+  background:#102235;
+}
+
+body.light-theme .control-group .tab.active,
+body.light-theme .view-tab.active{
+  color:#102235 !important;
+}
+
+body.light-theme .control-group .tab.active:after,
+body.light-theme .view-tab.active:after{
+  background:#102235;
+}
+
+body:not(.light-theme) .control-group .tab.active,
+body:not(.light-theme) .view-tab.active{
+  color:#f5f7f8 !important;
+}
+
+body:not(.light-theme) .control-group .tab.active:after,
+body:not(.light-theme) .view-tab.active:after{
+  background:#f5f7f8;
 }
 
 .legend-heading{
