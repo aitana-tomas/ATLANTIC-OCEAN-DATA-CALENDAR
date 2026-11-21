@@ -57,8 +57,8 @@ h2{font-family:Impact,"Arial Narrow",Arial,sans-serif;font-size:20px;letter-spac
 .map-x-labels span{font-size:9px;color:#172637;text-align:center;white-space:nowrap}
 .map-y-labels{position:absolute;left:0;top:0;bottom:18px;width:22px;display:grid;grid-template-rows:repeat(14,1fr);align-items:center}
 .map-y-labels span{font-size:8px;color:#172637;text-align:right;white-space:nowrap}
-.clear-btn{position:absolute;top:0;right:0;z-index:8;width:22px;height:22px;display:grid;place-items:center;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1;font-weight:400;padding:0;color:#172637;background:rgba(251,251,250,.82);border-radius:50%;transition:transform .15s ease,background .15s ease}
-.clear-btn:hover{transform:rotate(-45deg);background:rgba(251,251,250,.96)}
+.clear-btn{grid-column:3;grid-row:3;justify-self:start;align-self:center;font-family:Arial,Helvetica,sans-serif;font-size:7px;line-height:1;font-weight:700;letter-spacing:.25px;white-space:nowrap;padding:5px 6px;color:#172637;background:rgba(251,251,250,.88);border:1px solid #87929a;border-radius:12px;transition:transform .15s ease,background .15s ease}
+.clear-btn:hover{transform:translateY(-1px);background:rgba(251,251,250,.98)}
 .info-nav{width:min(100%,360px,30vw,38vh);display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:7px}
 .info-btn{display:flex;flex-direction:column;align-items:center;gap:8px;color:#132536;min-width:0}
 .info-btn>span:last-child{font-family:"Arial Narrow",Arial,sans-serif;font-size:9px;letter-spacing:.7px;white-space:nowrap}
@@ -188,7 +188,6 @@ h2{font-family:Impact,"Arial Narrow",Arial,sans-serif;font-size:20px;letter-spac
   .map-x-labels{left:21px;width:min(250px,25vw,30vh);height:13px}
   .map-y-labels{width:19px;bottom:14px}
   .map-x-labels span,.map-y-labels span{font-size:7px}
-  .clear-btn{font-size:16px}
   .info-nav{width:min(280px,25vw);margin-top:4px;gap:1px}
   .info-btn{gap:5px}
   .info-btn>span:last-child{font-size:7px;letter-spacing:.45px}
@@ -303,11 +302,6 @@ h2{font-family:Impact,"Arial Narrow",Arial,sans-serif;font-size:20px;letter-spac
   
   .depth-column{margin-top:0}
 
-  
-  .clear-btn{
-    left:calc(24px + min(310px,27vw,34vh) - 22px);
-    right:auto;
-  }
 }@media (min-width:1101px) and (max-height:900px){
   
   .top-controls{
@@ -337,11 +331,6 @@ h2{font-family:Impact,"Arial Narrow",Arial,sans-serif;font-size:20px;letter-spac
     transform:translateY(24px);
   }
 
-  
-  .clear-btn{
-    left:calc(24px + min(310px,27vw,34vh) - 22px);
-    right:auto;
-  }
 }:root{
   --ink:#f5f7f8;
   --muted:#b9c1c7;
