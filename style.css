@@ -1000,8 +1000,8 @@ body.many-years .monthly-point{width:6px;height:6px}
 
 @media (min-width:1101px){
   .main{
-    grid-template-columns:minmax(210px,16%) minmax(0,1fr) minmax(116px,5.5%);
-    column-gap:clamp(8px,.8vw,11px);
+    grid-template-columns:minmax(210px,14.3%) minmax(0,1fr) minmax(110px,3.5%);
+    column-gap:8px;
   }
 
   .header{
