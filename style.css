@@ -1000,8 +1000,8 @@ body.many-years .monthly-point{width:6px;height:6px}
 
 @media (min-width:1101px){
   .main{
-    grid-template-columns:minmax(280px,24%) minmax(0,1fr) minmax(145px,12%);
-    column-gap:clamp(12px,1.4vw,20px);
+    grid-template-columns:minmax(210px,15%) minmax(0,1fr) minmax(210px,15%);
+    column-gap:clamp(12px,1.2vw,16px);
   }
 
   .header{
@@ -1117,8 +1117,12 @@ body.many-years .monthly-point{width:6px;height:6px}
   }
 
   .region{
-    font-size:8.5px;
+    font-size:8px;
     letter-spacing:.6px;
+  }
+
+  .region-controls{
+    column-gap:6px;
   }
 
   .map-frame{
