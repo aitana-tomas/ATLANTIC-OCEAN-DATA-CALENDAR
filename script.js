@@ -406,7 +406,7 @@
           const normalized=Math.min(1,sd/((g.max-g.min)*.12));
           const halo=document.createElement("div");
           halo.className="day-halo";
-          halo.style.setProperty("--halo",(30+normalized*18)+"px");
+          halo.style.setProperty("--halo",(22+normalized*10)+"px");
           halo.style.setProperty("--halo-color",color);
           monthCell.append(halo,point);
           monthCell.addEventListener("mouseenter",e=>showMonthPointTip(e,year,mi,agg));
